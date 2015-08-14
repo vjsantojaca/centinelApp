@@ -11,6 +11,9 @@
 ### Java Class
 *.class
 
+### JSON files
+*.json
+
 ### Generated files
 /bin/
 /gen/
