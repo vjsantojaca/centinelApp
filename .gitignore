@@ -1,0 +1,41 @@
+### Built application files
+*.apk
+*.ap_
+*.jar
+!app/libs/*.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+### Files Dalvik VM
+*.dex
+
+### Java Class
+*.class
+
+### Generated files
+/bin/
+/gen/
+/classes/
+/gen-external-apklibs/
+.classpath
+
+### Gradle files
+.gradle
+/build
+
+### Local configuration file
+local.properties
+
+### Intellij IDEA config
+/.idea/workspace.xml
+/.idea/libraries
+/.idea/
+*.iml
+
+### VI swap files
+*.swp
+
+### OSX files
+.DS_Store
+
+### Windows files
+*.bak
