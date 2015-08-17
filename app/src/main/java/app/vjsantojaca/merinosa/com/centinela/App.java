@@ -7,6 +7,7 @@ import android.content.Context;
 import android.util.Log;
 
 import app.vjsantojaca.merinosa.com.centinela.services.DeviceAdmReceiver;
+import app.vjsantojaca.merinosa.com.centinela.volley.VolleyS;
 
 /*
 * Developer Víctor Santoja
@@ -19,16 +20,17 @@ public class App extends Application
     private static Context context;
     private static DevicePolicyManager devicePolicyManager;
     private static ComponentName componentName;
+    private static VolleyS volley;
 
     public void onCreate()
     {
         super.onCreate();
         Log.i(TAG, "App Creada");
 
+        App.context = getApplicationContext();
+        App.volley = VolleyS.getInstance(App.context);
         App.componentName = new ComponentName(this, DeviceAdmReceiver.class);
         App.devicePolicyManager = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
-
-        App.context = getApplicationContext();
     }
 
     public static Context getAppContext() { return App.context; }
@@ -36,4 +38,6 @@ public class App extends Application
     public static boolean activePolicyMananger() { return devicePolicyManager.isAdminActive(componentName); }
 
     public static ComponentName getComponentName(){ return componentName; }
+
+    public static VolleyS getVolley(){ return volley; }
 }
