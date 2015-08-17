@@ -1,7 +1,8 @@
-package app.vjsantojaca.merinosa.com.centinela;
+package app.vjsantojaca.merinosa.com.centinela.volley;
 
 import android.content.Context;
 
+import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.Volley;
 
@@ -27,5 +28,9 @@ public class VolleyS
 
     public RequestQueue getRequestQueue() {
         return mRequestQueue;
+    }
+
+    public  void addToRequestQueue(Request req) {
+        getRequestQueue().add(req);
     }
 }
