@@ -8,6 +8,8 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <!-- For checking current network state -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <!-- For accessing a location -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <!-- For waking device from sleep for showing notification -->
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <!-- For vibrating device -->
@@ -16,6 +18,12 @@
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <!-- For write settings -->
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <!-- For using PowerManager WakeLocks to keep processor from sleeping or screen from dimming -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Allows an application to receive the ACTION_BOOT_COMPLETED that is broadcast after the system finishes booting. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- For read the phone state -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
 
     <application
         android:name=".App"
@@ -34,6 +42,33 @@
             </intent-filter>
         </activity>
 
+        <!-- [START start receiver] -->
+        <receiver android:name=".services.system.StartReceiver"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
+        <!-- [END start receiver] -->
+        <!-- [START shutdown receiver] -->
+        <receiver android:name=".services.system.ShutdownReceiver" >
+            <intent-filter>
+                <action android:name="android.intent.action.ACTION_SHUTDOWN" />
+                <action android:name="android.intent.action.QUICKBOOT_POWEROFF" />
+            </intent-filter>
+        </receiver>
+        <!-- [END shutdown receiver] -->
+        <!-- [START device admin receiver] -->
+        <receiver android:name=".services.DeviceAdmReceiver"
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data android:name="android.app.device_admin"
+                android:resource="@xml/device_admin" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
+        <!-- [END device admin receiver] -->
         <!-- [START gcm_receiver] -->
         <receiver
             android:name="com.google.android.gms.gcm.GcmReceiver"

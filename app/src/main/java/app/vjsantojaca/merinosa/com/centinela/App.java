@@ -2,11 +2,16 @@ package app.vjsantojaca.merinosa.com.centinela;
 
 import android.app.Application;
 import android.app.admin.DevicePolicyManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.util.Log;
 
 import app.vjsantojaca.merinosa.com.centinela.services.DeviceAdmReceiver;
+import app.vjsantojaca.merinosa.com.centinela.services.system.ShutdownReceiver;
+import app.vjsantojaca.merinosa.com.centinela.services.system.StartReceiver;
 import app.vjsantojaca.merinosa.com.centinela.volley.VolleyS;
 
 /*
@@ -31,6 +36,15 @@ public class App extends Application
         App.volley = VolleyS.getInstance(App.context);
         App.componentName = new ComponentName(this, DeviceAdmReceiver.class);
         App.devicePolicyManager = (DevicePolicyManager) getSystemService(Context.DEVICE_POLICY_SERVICE);
+
+        IntentFilter filterShutdown = new IntentFilter(Intent.ACTION_SHUTDOWN);
+        BroadcastReceiver mReceiverShutdown = new ShutdownReceiver();
+        registerReceiver(mReceiverShutdown, filterShutdown);
+
+        IntentFilter filterStart = new IntentFilter(Intent.ACTION_BOOT_COMPLETED);
+        BroadcastReceiver mReceiverStart = new StartReceiver();
+        registerReceiver(mReceiverStart, filterStart);
+
     }
 
     public static Context getAppContext() { return App.context; }
