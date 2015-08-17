@@ -14,9 +14,9 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 
 import app.vjsantojaca.merinosa.com.centinela.services.gcm.RegistrationIntentService;
 
-public class LoadActivity extends Activity
+public class LoginActivity extends Activity
 {
-    private static final String TAG = LoadActivity.class.getName();
+    private static final String TAG = LoginActivity.class.getName();
     private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
     private BroadcastReceiver mRegistrationBroadcastReceiver;
 
