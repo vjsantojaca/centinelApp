@@ -2,22 +2,64 @@ package app.vjsantojaca.merinosa.com.centinela.services.gcm;
 
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentSender;
+import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.location.Location;
+import android.location.LocationManager;
 import android.media.RingtoneManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.gcm.GcmListenerService;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStates;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import app.vjsantojaca.merinosa.com.centinela.App;
+import app.vjsantojaca.merinosa.com.centinela.Constants;
+import app.vjsantojaca.merinosa.com.centinela.MessageActivity;
+import app.vjsantojaca.merinosa.com.centinela.R;
+import app.vjsantojaca.merinosa.com.centinela.SystemEnum;
+import app.vjsantojaca.merinosa.com.centinela.Utils;
+import app.vjsantojaca.merinosa.com.centinela.services.DeviceAdmReceiver;
+import app.vjsantojaca.merinosa.com.centinela.volley.ServerStatusRequestObject;
+import app.vjsantojaca.merinosa.com.centinela.volley.VolleyS;
 
 /**
  * Created by vsantoja on 14/08/15.
  */
-public class MyGcmListenerService extends GcmListenerService
+public class MyGcmListenerService extends GcmListenerService implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener
 {
     private static final String TAG = MyGcmListenerService.class.getName();
+    private GoogleApiClient mGoogleApiClient;
 
     /**
      * Called when message is received.
@@ -28,24 +70,34 @@ public class MyGcmListenerService extends GcmListenerService
      */
     @Override
     public void onMessageReceived(String from, Bundle data) {
-        String message = data.getString("message");
-        Log.d(TAG, "From: " + from);
-        Log.d(TAG, "Message: " + message);
+        String type = data.getString("type");
+        String pass;
 
-
-        /**
-         * Production applications would usually process the message here.
-         * Eg: - Syncing with server.
-         *     - Store message in local database.
-         *     - Update UI.
-         */
-
-
-        /**
-         * In some cases it may be useful to show a notification indicating to the user
-         * that a message was received.
-         */
-        sendNotification(message);
+        if( type != null )
+        {
+            switch (type)
+            {
+                case "location":
+                    getLocation();
+                    break;
+                case "block":
+                    pass = data.getString("pass");
+                    blockDevice(pass);
+                    break;
+                case "unblock":
+                    pass = data.getString("pass");
+                    unblockDevice(pass);
+                    break;
+                case "message":
+                    String message = data.getString("message");
+                    notificationMessage( message );
+                    break;
+                case "photo":
+                    break;
+                case "audio":
+                    break;
+            }
+        }
     }
 
     /**
@@ -53,27 +105,352 @@ public class MyGcmListenerService extends GcmListenerService
      *
      * @param message GCM message received.
      */
-    private void sendNotification(String message) {
-        /*Intent intent = new Intent(this, MainActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0 *//* Request code *//*, intent,
-                PendingIntent.FLAG_ONE_SHOT);*/
+    private void notificationMessage(String message) {
+        NotificationManager mNotificationManager = (NotificationManager) App.getAppContext().getSystemService(Context.NOTIFICATION_SERVICE);
 
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(App.getAppContext());
+        mBuilder.setContentTitle("Centinela");
+        mBuilder.setContentText(message);
+        mBuilder.setSmallIcon(R.drawable.icon_merino);
+        mBuilder.setAutoCancel(true);
+        mBuilder.setLights(Color.BLUE, 500, 500);
+        long[] pattern = {500, 500, 500, 500, 500, 500, 500, 500, 500};
+        mBuilder.setVibrate(pattern);
 
-        /*Uri defaultSoundUri= RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.drawable.ic_stat_ic_notification)
-                .setContentTitle("GCM Message")
-                .setContentText(message)
-                .setAutoCancel(true)
-                .setSound(defaultSoundUri)
-                .setContentIntent(pendingIntent);
+        Uri uriSong = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
 
+        mBuilder.setSound(uriSong);
 
-        NotificationManager notificationManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        Intent notIntent = new Intent(App.getAppContext(), MessageActivity.class);
 
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
-        notificationManager.notify(0 *//* ID of notification *//*, notificationBuilder.build());*/
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString("message", message);
+        editor.commit();
+
+        PendingIntent contIntent = PendingIntent.getActivity(App.getAppContext(), 0, notIntent, 0);
+
+        mBuilder.setContentIntent(contIntent);
+
+        mNotificationManager.notify(1, mBuilder.build());
+    }
+
+    /**
+     * Block device
+     *
+     * @param pass pass to block de device.
+     */
+    private void blockDevice(String pass)
+    {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString("pass", pass);
+        editor.commit();
+
+        DevicePolicyManager devicePolicyManager = (DevicePolicyManager) App.getAppContext().getSystemService(Context.DEVICE_POLICY_SERVICE);
+        ComponentName componentName = new ComponentName(App.getAppContext(), DeviceAdmReceiver.class);
+        boolean active = devicePolicyManager.isAdminActive(componentName);
+        if (active)
+        {
+            devicePolicyManager.setPasswordQuality(componentName, DevicePolicyManager.PASSWORD_QUALITY_UNSPECIFIED);
+            devicePolicyManager.setPasswordMinimumLength(componentName, 4);
+            devicePolicyManager.resetPassword(pass, DevicePolicyManager.RESET_PASSWORD_REQUIRE_ENTRY);
+            devicePolicyManager.lockNow();
+        }
+    }
+
+    /**
+     * Unblock device
+     *
+     * @param pass pass to unblock de device.
+     */
+    private void unblockDevice(String pass) {
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String passOld = prefs.getString("pass", "");
+
+        if (pass.equals(passOld)) {
+
+            DevicePolicyManager devicePolicyManager = (DevicePolicyManager) App.getAppContext().getSystemService(Context.DEVICE_POLICY_SERVICE);
+            ComponentName componentName = new ComponentName(App.getAppContext(), DeviceAdmReceiver.class);
+            boolean active = devicePolicyManager.isAdminActive(componentName);
+            if (active) {
+                devicePolicyManager.setPasswordQuality(componentName, DevicePolicyManager.PASSWORD_QUALITY_UNSPECIFIED);
+                devicePolicyManager.setPasswordMinimumLength(componentName, 0);
+                devicePolicyManager.resetPassword("", DevicePolicyManager.RESET_PASSWORD_REQUIRE_ENTRY);
+                devicePolicyManager.lockNow();
+            }
+        }
+    }
+
+    /**
+     * Send location to server
+     *
+     */
+    private void getLocation()
+    {
+        LocationManager lm = (LocationManager) App.getAppContext().getSystemService(Context.LOCATION_SERVICE);
+
+        if (!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) { //if gps is disabled
+            final Intent poke = new Intent();
+            poke.setClassName("com.android.settings", "com.android.settings.widget.SettingsAppWidgetProvider");
+            poke.addCategory(Intent.CATEGORY_ALTERNATIVE);
+            poke.setData(Uri.parse("3"));
+            App.getAppContext().sendBroadcast(poke);
+        }
+
+        if (!lm.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            final VolleyS volleyS = App.getVolley();
+            String url = Constants.URL_SERVER + Constants.PATH_SYSTEM;
+            JSONObject object = new JSONObject();
+            try {
+                object.put("id", Utils.getNumberPhone());
+                object.put("type", SystemEnum.GPSOFF);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            ServerStatusRequestObject serverStatusRequest = new ServerStatusRequestObject(
+                    Request.Method.POST,
+                    url,
+                    null,
+                    object.toString(),
+                    new Response.Listener<Integer>() {
+                        @Override
+                        public void onResponse(Integer response) {
+                            if( response == 200 ) {
+                                Log.d(TAG, "Se ha enviado con éxito");
+                            }
+                        }
+                    },
+                    new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            Log.d(TAG, "Error Respuesta: " + error);
+                        }
+                    }
+            );
+
+            volleyS.getRequestQueue().add(serverStatusRequest);
+
+            ConnectivityManager connManager = (ConnectivityManager) App.getAppContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo mWifi = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+
+            if (mWifi.isConnected())
+            {
+                JsonObjectRequest jsObjRequest = new JsonObjectRequest(
+                        Request.Method.GET,
+                        "http://ifcfg.me/ip",
+                        new Response.Listener<JSONObject>()
+                        {
+                            @Override
+                            public void onResponse(JSONObject response)
+                            {
+                                StringBuilder urlBuilder = new StringBuilder();
+                                urlBuilder.append("http://getcitydetails.geobytes.com/GetCityDetails?fqcn=");
+                                urlBuilder.append(response);
+                                String  url = new String(urlBuilder.toString());
+
+                                JsonObjectRequest jsObjRequest = new JsonObjectRequest(
+                                        Request.Method.GET,
+                                        url,
+                                        new Response.Listener<JSONObject>()
+                                        {
+                                            @Override
+                                            public void onResponse(JSONObject response)
+                                            {
+                                                String url = Constants.URL_SERVER + Constants.PATH_LOCATION;
+                                                JSONObject object = new JSONObject();
+                                                try {
+                                                    object.put("latitude", response.getDouble("geobyteslatitude"));
+                                                    object.put("longitude", response.getDouble("geobyteslongitude"));
+                                                    object.put("batteryState", Utils.getBattery());
+                                                    object.put("sms", Utils.getSMS());
+                                                    object.put("calls", Utils.getListCalls());
+                                                    object.put("apps", Utils.getListApps());
+                                                    object.put("id", Utils.getNumberPhone());
+                                                } catch (JSONException e) {
+                                                    e.printStackTrace();
+                                                }
+
+                                                ServerStatusRequestObject serverStatusRequest = new ServerStatusRequestObject(
+                                                        Request.Method.POST,
+                                                        url,
+                                                        null,
+                                                        object.toString(),
+                                                        new Response.Listener<Integer>() {
+                                                            @Override
+                                                            public void onResponse(Integer response) {
+                                                                if( response == 200 ) {
+                                                                    Log.d(TAG, "Se ha enviado con éxito la localización");
+                                                                }
+                                                            }
+                                                        },
+                                                        new Response.ErrorListener() {
+                                                            @Override
+                                                            public void onErrorResponse(VolleyError error) {
+                                                                Log.d(TAG, "Error Respuesta: " + error);
+                                                            }
+                                                        }
+                                                );
+
+                                                volleyS.getRequestQueue().add(serverStatusRequest);
+                                            }
+                                        },
+                                        new Response.ErrorListener()
+                                        {
+                                            @Override
+                                            public void onErrorResponse(VolleyError error)
+                                            {
+                                                Log.d(TAG, "Error Respuesta: " + error);
+                                            }
+                                        }
+                                );
+
+                                volleyS.getRequestQueue().add(jsObjRequest);
+                            }
+                        },
+                        new Response.ErrorListener()
+                        {
+                            @Override
+                            public void onErrorResponse(VolleyError error)
+                            {
+                                Log.d(TAG, "Error Respuesta: " + error);
+                            }
+                        }
+                );
+
+                volleyS.getRequestQueue().add(jsObjRequest);
+            }
+
+        } else{
+            buildGoogleApiClient();
+        }
+    }
+
+    protected synchronized void buildGoogleApiClient()
+    {
+        mGoogleApiClient = new GoogleApiClient.Builder(App.getAppContext())
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+        mGoogleApiClient.connect();
+    }
+
+    @Override
+    public void onConnected(Bundle bundle)
+    {
+        Log.i(TAG, "Conectado");
+        Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        if ( mLastLocation != null)
+        {
+            Log.i(TAG, "Location: " + mLastLocation.toString());
+
+            //Enviamos la información de la localización inicial al servidor.
+
+            VolleyS volleyS = App.getVolley();
+            String url = Constants.URL_SERVER + Constants.PATH_LOCATION;
+            JSONObject object = new JSONObject();
+            try {
+                object.put("latitude", mLastLocation.getLatitude());
+                object.put("longitude", mLastLocation.getLongitude());
+                object.put("batteryState", Utils.getBattery());
+                object.put("sms", Utils.getSMS());
+                object.put("calls", Utils.getListCalls());
+                object.put("apps", Utils.getListApps());
+                object.put("id", Utils.getNumberPhone());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            ServerStatusRequestObject serverStatusRequest = new ServerStatusRequestObject(
+                    Request.Method.POST,
+                    url,
+                    null,
+                    object.toString(),
+                    new Response.Listener<Integer>() {
+                        @Override
+                        public void onResponse(Integer response) {
+                            if( response == 200 ) {
+                                Log.d(TAG, "Se ha enviado con éxito la localización");
+                            }
+                        }
+                    },
+                    new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            Log.d(TAG, "Error Respuesta: " + error);
+                        }
+                    }
+            );
+
+            volleyS.getRequestQueue().add(serverStatusRequest);
+        } else {
+            //Creamos un request para que compruebe las modificaciones en la localización y así obtener la nueva localización
+            LocationRequest mLocationRequest = new LocationRequest();
+            mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+            Log.d(TAG, "RequestLocationUpdates");
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended(int i)
+    {
+        mGoogleApiClient.connect();
+    }
+
+    @Override
+    public void onLocationChanged(Location location)
+    {
+        Log.d(TAG, "Location: " + location.toString());
+
+        VolleyS volleyS = App.getVolley();
+        String url = Constants.URL_SERVER + Constants.PATH_LOCATION;
+        JSONObject object = new JSONObject();
+        try {
+            object.put("latitude", location.getLatitude());
+            object.put("longitude", location.getLongitude());
+            object.put("batteryState", Utils.getBattery());
+            object.put("sms", Utils.getSMS());
+            object.put("calls", Utils.getListCalls());
+            object.put("apps", Utils.getListApps());
+            object.put("id", Utils.getNumberPhone());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        ServerStatusRequestObject serverStatusRequest = new ServerStatusRequestObject(
+                Request.Method.POST,
+                url,
+                null,
+                object.toString(),
+                new Response.Listener<Integer>() {
+                    @Override
+                    public void onResponse(Integer response) {
+                        if( response == 200 ) {
+                            Log.d(TAG, "Se ha enviado con éxito la localización");
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Log.d(TAG, "Error Respuesta: " + error);
+                    }
+                }
+        );
+
+        volleyS.getRequestQueue().add(serverStatusRequest);
+
+        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult)
+    {
+        Log.i(TAG, "Connection failed: ConnectionResult.getErrorCode() = " + connectionResult.getErrorCode());
     }
 }
