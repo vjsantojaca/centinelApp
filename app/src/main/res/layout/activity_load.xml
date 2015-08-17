@@ -50,6 +50,7 @@
                 android:id="@+id/etPass"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:password="true"
                 android:layout_marginTop="12dp"
                 android:layout_below="@+id/etNumber"
                 android:layout_centerHorizontal="true"/>
@@ -70,8 +71,7 @@
             android:id="@+id/pbPass"
             android:layout_width="56dp"
             android:layout_height="56dp"
-            android:layout_centerInParent="true"
-            android:layout_below="@+id/ivLogo"/>
+            android:layout_centerInParent="true"/>
     </RelativeLayout>
 
 </LinearLayout>
