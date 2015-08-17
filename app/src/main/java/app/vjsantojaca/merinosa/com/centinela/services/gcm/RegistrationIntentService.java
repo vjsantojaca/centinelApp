@@ -3,15 +3,11 @@ package app.vjsantojaca.merinosa.com.centinela.services.gcm;
 import android.app.IntentService;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.os.Build;
 import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.view.View;
-import android.widget.Toast;
 
 import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.google.android.gms.gcm.GoogleCloudMessaging;
@@ -22,7 +18,6 @@ import org.json.JSONObject;
 
 import app.vjsantojaca.merinosa.com.centinela.App;
 import app.vjsantojaca.merinosa.com.centinela.Constants;
-import app.vjsantojaca.merinosa.com.centinela.LoginActivity;
 import app.vjsantojaca.merinosa.com.centinela.Utils;
 import app.vjsantojaca.merinosa.com.centinela.volley.ServerStatusRequestObject;
 import app.vjsantojaca.merinosa.com.centinela.volley.VolleyS;
@@ -42,7 +37,6 @@ public class RegistrationIntentService extends IntentService
     @Override
     protected void onHandleIntent(Intent intent) {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-
 
         try {
             // In the (unlikely) event that multiple refresh operations occur simultaneously,
@@ -69,9 +63,15 @@ public class RegistrationIntentService extends IntentService
             // on a third-party server, this ensures that we'll attempt the update at a later time.
             sharedPreferences.edit().putBoolean(Constants.SENT_TOKEN_TO_SERVER, false).apply();
         }
+
         // Notify UI that registration has completed, so the progress indicator can be hidden.
-        Intent registrationComplete = new Intent(Constants.REGISTRATION_COMPLETE);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(registrationComplete);
+        // Only notify the first time.
+        if( sharedPreferences.getBoolean("first", true) )
+        {
+            Intent registrationComplete = new Intent(Constants.REGISTRATION_COMPLETE);
+            LocalBroadcastManager.getInstance(this).sendBroadcast(registrationComplete);
+            sharedPreferences.edit().putBoolean("first", false);
+        }
     }
 
 
@@ -105,8 +105,6 @@ public class RegistrationIntentService extends IntentService
                     public void onResponse(Integer response) {
                         if( response == 200 ) {
                             Log.d(TAG, "Guardado correctamente en el servidor");
-                            Intent intent = new Intent(App.getAppContext(), LoginActivity.class);
-                            startService(intent);
                         }
                     }
                 },

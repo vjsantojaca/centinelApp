@@ -3,13 +3,17 @@ package app.vjsantojaca.merinosa.com.centinela;
 import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
@@ -60,6 +64,22 @@ public class LoginActivity extends Activity
             intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "Centinela pertenece al proyecto centinela. Es propiedad de MerinoSA.");
             startActivityForResult(intent, 47);
         }
+
+        mRegistrationBroadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent)
+            {
+                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+                boolean sentToken = sharedPreferences.getBoolean(Constants.SENT_TOKEN_TO_SERVER, false);
+                if (sentToken)
+                {
+
+                } else
+                {
+                    Log.d(LoginActivity.class.getName(), "Error registro en GCM");
+                }
+            }
+        };
 
         tvPass = (TextView) findViewById(R.id.tvPass);
         etPass = (EditText) findViewById(R.id.etPass);
@@ -116,10 +136,15 @@ public class LoginActivity extends Activity
                                             if( response == 200 ) {
                                                 Toast.makeText(getApplicationContext(),"La contraseña es correcta, espere unos segundos mientras se termina de configurar la aplicacion.", Toast.LENGTH_LONG).show();
                                                 tvPass.setVisibility(View.GONE);
+                                                etNumber.setVisibility(View.GONE);
                                                 etPass.setVisibility(View.GONE);
                                                 buttonPass.setVisibility(View.GONE);
                                                 pbPass.setVisibility(View.VISIBLE);
                                                 if (checkPlayServices()) {
+                                                    //Ocultamos el teclado
+                                                    InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                                                    imm.hideSoftInputFromWindow(buttonPass.getWindowToken(), 0);
+
                                                     // Start IntentService to register this application with GCM.
                                                     Intent intent = new Intent(App.getAppContext(), RegistrationIntentService.class);
                                                     startService(intent);
