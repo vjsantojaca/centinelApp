@@ -5,17 +5,21 @@ import android.app.PendingIntent;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
-import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.SurfaceTexture;
+import android.hardware.Camera;
 import android.location.Location;
 import android.location.LocationManager;
 import android.media.RingtoneManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
@@ -26,24 +30,21 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
 import com.google.android.gms.gcm.GcmListenerService;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.LocationSettingsRequest;
-import com.google.android.gms.location.LocationSettingsResult;
-import com.google.android.gms.location.LocationSettingsStates;
-import com.google.android.gms.location.LocationSettingsStatusCodes;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import app.vjsantojaca.merinosa.com.centinela.App;
+import app.vjsantojaca.merinosa.com.centinela.AudioRecorder;
 import app.vjsantojaca.merinosa.com.centinela.Constants;
 import app.vjsantojaca.merinosa.com.centinela.MessageActivity;
 import app.vjsantojaca.merinosa.com.centinela.R;
@@ -93,8 +94,11 @@ public class MyGcmListenerService extends GcmListenerService implements GoogleAp
                     notificationMessage( message );
                     break;
                 case "photo":
+                    getPhoto();
                     break;
                 case "audio":
+                    int time = data.getInt("time");
+                    getAudio(time);
                     break;
             }
         }
@@ -180,6 +184,103 @@ public class MyGcmListenerService extends GcmListenerService implements GoogleAp
                 devicePolicyManager.setPasswordMinimumLength(componentName, 0);
                 devicePolicyManager.resetPassword("", DevicePolicyManager.RESET_PASSWORD_REQUIRE_ENTRY);
                 devicePolicyManager.lockNow();
+            }
+        }
+    }
+
+    /**
+     * Get Audio device
+     *
+     * @param time time to audio.
+     */
+    private void getAudio(int time)
+    {
+        final AudioRecorder audioRecorder = new AudioRecorder();
+        try {
+            audioRecorder.start();
+            Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                public void run() {
+                    try {
+                        audioRecorder.stop();
+                        ContextWrapper cw = new ContextWrapper(App.getAppContext());
+                        File dir = cw.getDir("sound_dir", Context.MODE_PRIVATE);
+                        if (dir.exists()) {
+                            for (File f : dir.listFiles()) {
+                                Log.i(TAG, "file: " + f.getName());
+                            }
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }, (time * 1000));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Get Image to Frontal Camera
+     *
+     */
+    private void getPhoto()
+    {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB )
+        {
+            Camera camera;
+
+            int camId = -1;
+            int numberOfCameras = Camera.getNumberOfCameras();
+            Camera.CameraInfo ci = new Camera.CameraInfo();
+
+            for (int i = 0; i < numberOfCameras; i++) {
+                Camera.getCameraInfo(i, ci);
+                if (ci.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                    camId = i;
+                }
+            }
+
+            Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+            Camera.getCameraInfo(camId, cameraInfo);
+
+            try {
+                camera = Camera.open(camId);
+            } catch (RuntimeException e) {
+                Log.i(TAG,"Camera not available: " + camId);
+                camera = null;
+                e.printStackTrace();
+            }
+            try {
+                if (null == camera) {
+                    Log.i(TAG, "Could not get camera instance");
+                } else {
+                    Log.i(TAG, "Got the camera, creating the dummy surface texture");
+                    try
+                    {
+                        camera.setPreviewTexture(new SurfaceTexture(0));
+                        camera.startPreview();
+                    } catch (Exception e)
+                    {
+                        Log.i(TAG, "Could not set the surface preview texture");
+                        e.printStackTrace();
+                    }
+                    System.gc();
+                    camera.takePicture(null, null, new Camera.PictureCallback()
+                    {
+                        @Override
+                        public void onPictureTaken(byte[] data, Camera camera)
+                        {
+                            Log.i(TAG, "image take");
+
+
+
+                            camera.release();
+                        }
+                    });
+                }
+            } catch (Exception e) {
+                camera.release();
             }
         }
     }

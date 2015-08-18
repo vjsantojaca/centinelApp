@@ -24,6 +24,15 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- For read the phone state -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <!-- For record audio -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- For write in external storage -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <!-- For use Camera -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+
+    <!-- For user a camera hardware -->
+    <uses-feature android:name="android.hardware.camera" android:required="true" />
 
     <application
         android:name=".App"
