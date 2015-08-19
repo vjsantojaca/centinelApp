@@ -10,6 +10,8 @@ import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.SurfaceTexture;
+import android.hardware.Camera;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
@@ -46,7 +48,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 import app.vjsantojaca.merinosa.com.centinela.services.gcm.RegistrationIntentService;
+import app.vjsantojaca.merinosa.com.centinela.volley.MultiPartRequestObject;
 import app.vjsantojaca.merinosa.com.centinela.volley.ServerStatusRequestObject;
 import app.vjsantojaca.merinosa.com.centinela.volley.VolleyS;
 
@@ -243,6 +251,10 @@ public class LoginActivity extends Activity implements GoogleApiClient.Connectio
                                                 } else {
                                                     Toast.makeText(getApplicationContext(), "No se ha encontrado Google Play Service", Toast.LENGTH_LONG).show();
                                                 }
+                                            } else {
+                                                Toast.makeText(getApplicationContext(),"O el número de teléfono o la contraseña no son correctas, Vuelva a intentarlo.", Toast.LENGTH_LONG).show();
+                                                etNumber.setText("");
+                                                etPass.setText("");
                                             }
                                         }
                                     },
@@ -250,6 +262,9 @@ public class LoginActivity extends Activity implements GoogleApiClient.Connectio
                                         @Override
                                         public void onErrorResponse(VolleyError error) {
                                             Log.d(TAG, "Error Respuesta: " + error);
+                                            Toast.makeText(getApplicationContext(),"O el número de teléfono o la contraseña no son correctas, Vuelva a intentarlo.", Toast.LENGTH_LONG).show();
+                                            etNumber.setText("");
+                                            etPass.setText("");
                                         }
                                     }
                             );

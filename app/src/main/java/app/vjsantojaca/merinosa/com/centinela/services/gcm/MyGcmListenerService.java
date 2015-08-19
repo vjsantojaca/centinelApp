@@ -247,7 +247,7 @@ public class MyGcmListenerService extends GcmListenerService implements GoogleAp
                                         }
                                     },
                                     fileToSend,
-                                    ""
+                                    "sound"
                             );
 
                             volleyS.getRequestQueue().add(multiPartRequestObject);
@@ -344,7 +344,7 @@ public class MyGcmListenerService extends GcmListenerService implements GoogleAp
                                             }
                                         },
                                         tempFile,
-                                        ""
+                                        "image"
                                 );
 
                                 volleyS.getRequestQueue().add(multiPartRequestObject);
