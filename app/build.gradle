@@ -5,6 +5,12 @@ android {
     compileSdkVersion 22
     buildToolsVersion "22.0.1"
 
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/LICENSE'
+    }
+
     defaultConfig {
         applicationId "app.vjsantojaca.merinosa.com.centinela"
         minSdkVersion 9
@@ -26,5 +32,10 @@ dependencies {
     compile 'com.google.android.gms:play-services-location:7.5.0'
     compile 'com.google.code.gson:gson:+'
     compile 'com.mcxiaoke.volley:library:+'
-    compile 'org.apache.httpcomponents:httpmime:4.2.3'
+    compile ('org.apache.httpcomponents:httpmime:4.2.3') {
+        exclude group: 'org.apache.httpcomponents', module: 'httpclient'
+    }
+    compile ('org.apache.httpcomponents:httpcore:4.4.1') {
+        exclude group: 'org.apache.httpcomponents', module: 'httpclient'
+    }
 }
