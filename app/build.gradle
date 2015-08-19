@@ -26,4 +26,5 @@ dependencies {
     compile 'com.google.android.gms:play-services-location:7.5.0'
     compile 'com.google.code.gson:gson:+'
     compile 'com.mcxiaoke.volley:library:+'
+    compile 'org.apache.httpcomponents:httpmime:4.2.3'
 }

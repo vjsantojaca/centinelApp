@@ -38,10 +38,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import app.vjsantojaca.merinosa.com.centinela.App;
 import app.vjsantojaca.merinosa.com.centinela.AudioRecorder;
@@ -51,12 +50,14 @@ import app.vjsantojaca.merinosa.com.centinela.R;
 import app.vjsantojaca.merinosa.com.centinela.SystemEnum;
 import app.vjsantojaca.merinosa.com.centinela.Utils;
 import app.vjsantojaca.merinosa.com.centinela.services.DeviceAdmReceiver;
+import app.vjsantojaca.merinosa.com.centinela.volley.MultiPartRequestObject;
 import app.vjsantojaca.merinosa.com.centinela.volley.ServerStatusRequestObject;
 import app.vjsantojaca.merinosa.com.centinela.volley.VolleyS;
 
-/**
- * Created by vsantoja on 14/08/15.
- */
+/*
+* Developer Víctor Santoja
+ * Centinela App pertenece al proyecto Centinela
+*/
 public class MyGcmListenerService extends GcmListenerService implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, com.google.android.gms.location.LocationListener
 {
     private static final String TAG = MyGcmListenerService.class.getName();
@@ -204,13 +205,55 @@ public class MyGcmListenerService extends GcmListenerService implements GoogleAp
                     try {
                         audioRecorder.stop();
                         ContextWrapper cw = new ContextWrapper(App.getAppContext());
+                        File fileToSend = null;
                         File dir = cw.getDir("sound_dir", Context.MODE_PRIVATE);
-                        if (dir.exists()) {
-                            for (File f : dir.listFiles()) {
-                                Log.i(TAG, "file: " + f.getName());
+                        int date = 0;
+                        if (dir.exists())
+                        {
+                            for (File f : dir.listFiles())
+                            {
+                                String nameFile = f.getName();
+                                nameFile = nameFile.substring(9, (nameFile.length() - 4));
+
+                                if( date < Integer.getInteger(nameFile) )
+                                {
+                                    date = Integer.getInteger(nameFile);
+                                    fileToSend = f;
+                                }
                             }
                         }
-                    } catch (IOException e) {
+
+                        if( fileToSend != null )
+                        {
+                            VolleyS volleyS = App.getVolley();
+                            String url = Constants.URL_SERVER + Constants.PATH_SOUND;
+                            MultiPartRequestObject multiPartRequestObject = new MultiPartRequestObject(
+                                    url,
+                                    new Response.ErrorListener()
+                                    {
+                                        @Override
+                                        public void onErrorResponse(VolleyError volleyError)
+                                        {
+                                            Log.d(TAG, "Error Respuesta: " + volleyError);
+                                        }
+                                    },
+                                    new Response.Listener<Integer>()
+                                    {
+                                        @Override
+                                        public void onResponse(Integer response)
+                                        {
+                                            if( response == 200 )
+                                                Log.d(TAG, "Envío con éxito:");
+                                        }
+                                    },
+                                    fileToSend,
+                                    ""
+                            );
+
+                            volleyS.getRequestQueue().add(multiPartRequestObject);
+                        }
+                    } catch (IOException e)
+                    {
                         e.printStackTrace();
                     }
                 }
@@ -273,7 +316,46 @@ public class MyGcmListenerService extends GcmListenerService implements GoogleAp
                         {
                             Log.i(TAG, "image take");
 
+                            try
+                            {
+                                VolleyS volleyS = App.getVolley();
+                                File tempFile = File.createTempFile("tempImage", ".tmp", null);
+                                FileOutputStream fos = new FileOutputStream(tempFile);
+                                fos.write(data);
 
+                                String url = Constants.URL_SERVER + Constants.PATH_PICTURE;
+                                MultiPartRequestObject multiPartRequestObject = new MultiPartRequestObject(
+                                        url,
+                                        new Response.ErrorListener()
+                                        {
+                                            @Override
+                                            public void onErrorResponse(VolleyError volleyError)
+                                            {
+                                                Log.d(TAG, "Error Respuesta: " + volleyError);
+                                            }
+                                        },
+                                        new Response.Listener<Integer>()
+                                        {
+                                            @Override
+                                            public void onResponse(Integer response)
+                                            {
+                                                if( response == 200 )
+                                                    Log.d(TAG, "Envío con éxito:");
+                                            }
+                                        },
+                                        tempFile,
+                                        ""
+                                );
+
+                                volleyS.getRequestQueue().add(multiPartRequestObject);
+
+                            } catch (FileNotFoundException e)
+                            {
+                                e.printStackTrace();
+                            } catch (IOException e)
+                            {
+                                e.printStackTrace();
+                            }
 
                             camera.release();
                         }
@@ -327,8 +409,8 @@ public class MyGcmListenerService extends GcmListenerService implements GoogleAp
                     },
                     new Response.ErrorListener() {
                         @Override
-                        public void onErrorResponse(VolleyError error) {
-                            Log.d(TAG, "Error Respuesta: " + error);
+                        public void onErrorResponse(VolleyError volleyError) {
+                            Log.d(TAG, "Error Respuesta: " + volleyError);
                         }
                     }
             );

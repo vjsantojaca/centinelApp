@@ -11,9 +11,10 @@ public class Constants
 
     //Info Server
     public static final String URL_SERVER = "http://localhost:8080/ServerGeolocation/centinela/api";
-
     public static final String PATH_LOCATION = "/location";
     public static final String PATH_SYSTEM = "/system";
     public static final String PATH_GCM = "/device/gcm";
     public static final String PATH_CHECK = "/device/checkPass";
+    public static final String PATH_SOUND = "/device/files/sound";
+    public static final String PATH_PICTURE = "/device/files/picture";
 }
