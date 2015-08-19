@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="app.vjsantojaca.merinosa.com.centinela" >
+    package="app.vjsantojaca.merinosa.com.centinela"
+    android:installLocation="internalOnly"
+    android:protectionLevel="signatureOrSystem" >
 
     <!-- For receiving GCM messages -->
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
@@ -10,6 +12,12 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- For accessing a location -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- For accessing a wifi state -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!-- For change a wifi state -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <!-- Allows the app to disable the keylock and any associated password security -->
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <!-- For waking device from sleep for showing notification -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- For vibrating device -->
@@ -22,12 +30,24 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- Allows an application to receive the ACTION_BOOT_COMPLETED that is broadcast after the system finishes booting. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- For modify the phone state -->
+    <uses-permission android:name="android.permission.MODIFY_PHONE_STATE"/>
+    <!-- Allows an application to update device statistics.-->
+    <uses-permission android:name="android.permission.UPDATE_DEVICE_STATS" />
     <!-- For read the phone state -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <!-- For read SMS -->
+    <uses-permission android:name="android.permission.READ_SMS"/>
+    <!-- For read Calls -->
+    <uses-permission android:name="android.permission.READ_CALL_LOG" />
     <!-- For record audio -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- For write in external storage -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <!-- For lock de device -->
+    <uses-permission android:name="android.permission.USES_POLICY_FORCE_LOCK"/>
+    <!-- For read google services -->
+    <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
     <!-- For use Camera -->
     <uses-permission android:name="android.permission.CAMERA"/>
 
