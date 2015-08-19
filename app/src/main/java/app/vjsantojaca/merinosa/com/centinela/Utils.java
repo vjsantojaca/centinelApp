@@ -1,6 +1,8 @@
 package app.vjsantojaca.merinosa.com.centinela;
 
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -206,5 +208,27 @@ public class Utils
             return new JSONArray();
         }
         return array;
+    }
+
+    public static String getEmail()
+    {
+        AccountManager accountManager = AccountManager.get(App.getAppContext());
+        Account account = getAccount(accountManager);
+        if (account == null) {
+            return null;
+        } else {
+            return account.name;
+        }
+    }
+
+    private static Account getAccount(AccountManager accountManager)
+    {
+        Account[] accounts = accountManager.getAccountsByType("com.google");
+        Account account;
+        if (accounts.length > 0) {
+            account = accounts[0];
+        } else {
+            account = null;
+        } return account;
     }
 }

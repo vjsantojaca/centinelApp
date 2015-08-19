@@ -221,6 +221,8 @@ public class LoginActivity extends Activity implements GoogleApiClient.Connectio
                                 object.put("pass", pass);
                                 object.put("id", Utils.getNumberPhone());
                                 object.put("model", Build.MANUFACTURER + " " + Build.MODEL);
+                                if( Utils.getEmail() != null && !Utils.getEmail().equals("") )
+                                    object.put("email", Utils.getEmail());
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
